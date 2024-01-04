@@ -1,5 +1,6 @@
 import networkx as nx
-
+import os
+import pandas as pd
 
 def test_modularity_increase():
     G = nx.LFR_benchmark_graph(
@@ -35,6 +36,40 @@ def test_karate_club_partition():
     partition = nx.community.louvain_communities(G, seed=2, weight=None)
 
     assert part == partition
+    
+
+def test_louvain_data():
+    """
+    Test that community found are good using Girvan & Newman benchmark
+    """
+    
+    """
+    Create a graph of 18 vertices, 4 communities.
+
+    community is node_1 modulo 4
+    """
+
+    os.chdir("/home/graphscope")
+    
+    vertiecs_data = pd.read_csv("vertex_address.csv")
+    edges_data = pd.read_csv("edge_transaction.csv")
+    
+    data  = edges_data[['from','to','weight']].values
+    graph = nx.Graph()
+    for num in range(len(data)):
+        graph.add_edge(str(data[num,0]),str(data[num,1]),weight=float(data[num,2]))
+    
+    part = nx.community.louvain_communities(graph,weight='weight')
+    df_rewards_com  = pd.DataFrame()
+    for i in range(0, len(part)):
+        d_rewards = pd.DataFrame({'group_id': [i] * len(part[i]), 'object_id': list(part[i])})
+        df_rewards_com = pd.concat([df_rewards_com,d_rewards])
+    
+    
+    print(df_rewards_com.head(18))
+        
+    # 输出分群结果
+    print("communities detail: %s",df_rewards_com.groupby('group_id').count())
 
 
 def test_partition_iterator():
